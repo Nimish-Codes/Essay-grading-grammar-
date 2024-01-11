@@ -1,4 +1,4 @@
 streamlit
-spacy
+sentence_transformers
 language_tool_python
 requests
