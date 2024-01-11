@@ -9,27 +9,20 @@ def download_spacy_model(model_name):
         download(model_name)
     except Exception as e:
         raise RuntimeError(f"Error downloading spaCy model: {e}")
-        st.error(f"Error downloading spaCy model: {e}")
-        # st.stop()
-
-# def download_spacy_model(model_name):
-#     try:
-#         from spacy.cli import download
-#         download(model_name)
-#     except Exception as e:
-#         st.error(f"Error downloading spaCy model: {e}")
-#         # st.stop()
 
 # Download spaCy model if not already downloaded
-download_spacy_model("en_core_web_sm")
+try:
+    download_spacy_model("en_core_web_sm")
+except RuntimeError as e:
+    st.error(f"Error: {e}")
+    st.stop()
 
 # Initialize LanguageTool
 def initialize_language_tool():
     try:
         return language_tool_python.LanguageTool('en-US')
     except requests.exceptions.RequestException as e:
-        st.error(f"Error initializing LanguageTool: {e}")
-        return None
+        raise RuntimeError(f"Error initializing LanguageTool: {e}")
 
 # Load spaCy model and add the 'sentencizer' component
 nlp = spacy.load("en_core_web_sm")
@@ -103,8 +96,8 @@ def process_and_grade_essay(essay):
     return result
 
 # Streamlit UI
-st.title("Essay Processing and Grading App")
-st.warning(f"This app finds, corrects word errors \n\n Write your essay with title, introduction, body and conclusion like, title: your text and do same for introduction: body: and conclusion: \n For example \n title: This is title \n\n introduction: This \n is \n introduction \n\n body: this \n is\n body \n\n conclusion: this\n is\n conclusion")
+st.title("Advanced Essay Processing and Grading App")
+st.warning("This app finds, corrects word errors, and provides additional features to enhance your essay.")
 
 # Input textarea for the user to enter their essay
 user_essay = st.text_area("Enter your essay here:", value='', height=400)
@@ -126,3 +119,24 @@ if st.button("Process and Grade Essay"):
 
     st.subheader("Corrected Essay:")
     st.write(result['corrected_essay'])
+
+    # Additional Features
+    st.subheader("Additional Features:")
+    
+    # Word Counter
+    word_count = len(user_essay.split())
+    st.write(f"Word Count: {word_count}")
+
+    # Plagiarism Detection (Simple example with a predefined phrase)
+    predefined_phrase = "This is a sample phrase for plagiarism detection."
+    plagiarism_detected = predefined_phrase.lower() in user_essay.lower()
+    st.write(f"Plagiarism Detected: {plagiarism_detected}")
+
+    # Language Selection
+    selected_language = st.selectbox("Select Language:", ["English", "Spanish", "French"])
+    st.write(f"Selected Language: {selected_language}")
+
+    # Summary Generator
+    summary = " ".join(sent.text for sent in nlp(user_essay).sents[:3])  # Extract the first 3 sentences as a summary
+    st.subheader("Summary:")
+    st.write(summary)
