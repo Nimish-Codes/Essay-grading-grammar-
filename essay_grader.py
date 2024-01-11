@@ -2,7 +2,6 @@ import streamlit as st
 import spacy
 import language_tool_python
 import requests.exceptions
-import os
 
 def initialize_language_tool():
     try:
@@ -12,15 +11,7 @@ def initialize_language_tool():
         return None
 
 # Load spaCy model and add the 'sentencizer' component
-model_path = os.path.join(os.path.dirname(spacy.__file__), 'models', 'en_core_web_sm')
-try:
-    nlp = spacy.load(model_path)
-except Exception as e:
-    st.error(f"Error loading spaCy model: {e}")
-    nlp = None
-
-
-# nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm")
 sentencizer = nlp.add_pipe('sentencizer')
 
 tool = initialize_language_tool()
