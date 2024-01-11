@@ -3,6 +3,18 @@ import spacy
 import language_tool_python
 import requests.exceptions
 
+def download_spacy_model(model_name):
+    try:
+        from spacy.cli import download
+        download(model_name)
+    except Exception as e:
+        st.error(f"Error downloading spaCy model: {e}")
+        st.stop()
+
+# Download spaCy model if not already downloaded
+download_spacy_model("en_core_web_sm")
+
+# Initialize LanguageTool
 def initialize_language_tool():
     try:
         return language_tool_python.LanguageTool('en-US')
