@@ -2,4 +2,3 @@ streamlit
 spacy
 language_tool_python
 requests
-os
