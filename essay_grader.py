@@ -9,14 +9,16 @@ def download_spacy_model(model_name):
         download(model_name)
     except Exception as e:
         raise RuntimeError(f"Error downloading spaCy model: {e}")
-
-def download_spacy_model(model_name):
-    try:
-        from spacy.cli import download
-        download(model_name)
-    except Exception as e:
         st.error(f"Error downloading spaCy model: {e}")
         # st.stop()
+
+# def download_spacy_model(model_name):
+#     try:
+#         from spacy.cli import download
+#         download(model_name)
+#     except Exception as e:
+#         st.error(f"Error downloading spaCy model: {e}")
+#         # st.stop()
 
 # Download spaCy model if not already downloaded
 download_spacy_model("en_core_web_sm")
