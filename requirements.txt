@@ -1,4 +1,4 @@
 streamlit
 sentence_transformers
-grammar_check
+language_tool_python
 requests
