@@ -1,40 +1,21 @@
 import streamlit as st
-import spacy
+from sentence_transformers import SentenceTransformer, util
 import language_tool_python
 import requests.exceptions
 
-def download_spacy_model(model_name):
-    try:
-        from spacy.cli import download
-        download(model_name)
-    except Exception as e:
-        raise RuntimeError(f"Error downloading spaCy model: {e}")
-
-# Download spaCy model if not already downloaded
-try:
-    download_spacy_model("en_core_web_sm")
-except RuntimeError as e:
-    st.error(f"Error: {e}")
-    # st.stop()
-
-# Initialize LanguageTool
 def initialize_language_tool():
     try:
         return language_tool_python.LanguageTool('en-US')
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"Error initializing LanguageTool: {e}")
 
-# Load spaCy model and add the 'sentencizer' component
-nlp = spacy.load("en_core_web_sm")
-sentencizer = nlp.add_pipe('sentencizer')
+# Load Sentence Transformer model
+model = SentenceTransformer('paraphrase-distilroberta-base')
 
 tool = initialize_language_tool()
 
 def process_and_grade_essay(essay):
-    # Step 1: Process the essay using spaCy
-    doc = nlp(essay)
-
-    # Step 2: Extract faults, grammar mistakes, and suggestions
+    # Step 1: Extract faults, grammar mistakes, and suggestions
     faults = []
 
     if tool:
@@ -44,14 +25,8 @@ def process_and_grade_essay(essay):
         # Provide more detailed feedback for each grammar mistake
         detailed_feedback = []
         for match in grammar_mistakes:
-            if hasattr(match, 'fromx') and hasattr(match, 'tox'):
-                # Use match.fromx and match.tox for character indices
-                detailed_feedback.append(f"Error from character {match.fromx} to {match.tox}: {match.message}")
-            elif hasattr(match, 'fromy') and hasattr(match, 'toy'):
-                # Use match.fromy and match.toy for line and column numbers
-                detailed_feedback.append(f"Error at line {match.fromy}, column {match.fromycol}: {match.message}")
-            else:
-                detailed_feedback.append(f"Error: {match.message}")
+            # Use match.fromy and match.fromycol for line and column numbers
+            detailed_feedback.append(f"Error at line {match.fromy}, column {match.fromycol}: {match.message}")
 
         # Include detailed feedback in the result
         result = {
@@ -67,32 +42,18 @@ def process_and_grade_essay(essay):
             'corrected_essay': essay
         }
 
-    # Step 3: Provide feedback on essay structure and content
-    has_title = any(sent.text.lower().startswith('title') for sent in doc.sents)
-    has_introduction = any(sent.text.lower().startswith('introduction') for sent in doc.sents)
-    has_body = any(sent.text.lower().startswith('body') for sent in doc.sents)
-    has_conclusion = any(sent.text.lower().startswith('conclusion') for sent in doc.sents)
+    # Step 2: Provide overall feedback using Sentence Transformer
+    embeddings = model.encode([essay])
+    reference_embedding = model.encode(["A well-structured and coherent essay."])
+    similarity = util.pytorch_cos_sim(embeddings, reference_embedding)[0][0].item()
 
-    if not has_title:
-        faults.append("The essay lacks a title.")
-      
-    if not has_introduction:
-        faults.append("The essay lacks an introduction.")
-
-    if not has_body:
-        faults.append("The essay lacks a body section.")
-
-    if not has_conclusion:
-        faults.append("The essay lacks a conclusion.")
-
-    # Step 4: Provide overall feedback
     feedback = "Overall, your essay could benefit from the following improvements:\n"
-    feedback += "\n".join(faults)
+    feedback += f"Similarity to a well-structured essay: {similarity:.2%}"
 
     # Include overall feedback in the result
     result['feedback'] = feedback
 
-    # Step 5: Return the result
+    # Return the result
     return result
 
 # Streamlit UI
@@ -122,7 +83,7 @@ if st.button("Process and Grade Essay"):
 
     # Additional Features
     st.subheader("Additional Features:")
-    
+
     # Word Counter
     word_count = len(user_essay.split())
     st.write(f"Word Count: {word_count}")
@@ -137,6 +98,6 @@ if st.button("Process and Grade Essay"):
     st.write(f"Selected Language: {selected_language}")
 
     # Summary Generator
-    summary = " ".join(sent.text for sent in nlp(user_essay).sents[:3])  # Extract the first 3 sentences as a summary
+    summary = " ".join(user_essay.split()[:30])  # Extract the first 30 words as a summary
     st.subheader("Summary:")
     st.write(summary)
