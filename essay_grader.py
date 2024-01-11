@@ -15,7 +15,7 @@ try:
     download_spacy_model("en_core_web_sm")
 except RuntimeError as e:
     st.error(f"Error: {e}")
-    st.stop()
+    # st.stop()
 
 # Initialize LanguageTool
 def initialize_language_tool():
