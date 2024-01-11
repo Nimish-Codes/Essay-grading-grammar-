@@ -1,11 +1,11 @@
 import streamlit as st
 from sentence_transformers import SentenceTransformer, util
-from grammar_check import LanguageTool
+import language_tool_python
 import requests.exceptions
 
 def initialize_language_tool():
     try:
-        return LanguageTool('en-US')
+        return language_tool_python.LanguageTool('en-US')
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"Error initializing LanguageTool: {e}")
 
