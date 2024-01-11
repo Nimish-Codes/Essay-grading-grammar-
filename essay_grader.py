@@ -11,7 +11,13 @@ def initialize_language_tool():
         return None
 
 # Load spaCy model and add the 'sentencizer' component
-nlp = spacy.load("en_core_web_sm")
+try:
+    nlp = spacy.load("en_core_web_sm")
+except Exception as e:
+    st.error(f"Error loading spaCy model: {e}")
+    nlp = None
+
+# nlp = spacy.load("en_core_web_sm")
 sentencizer = nlp.add_pipe('sentencizer')
 
 tool = initialize_language_tool()
