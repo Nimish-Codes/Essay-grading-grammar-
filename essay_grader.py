@@ -10,8 +10,7 @@ def initialize_language_tool():
         raise RuntimeError(f"Error initializing LanguageTool: {e}")
 
 # Load Sentence Transformer model
-model = SentenceTransformer('paraphrase-distilroberta-base')
-
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # Use a different model
 tool = initialize_language_tool()
 
 def process_and_grade_essay(essay):
