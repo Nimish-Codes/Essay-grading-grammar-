@@ -83,7 +83,7 @@ def process_and_grade_essay(essay):
 
 # Streamlit UI
 st.title("Essay Processing and Grading App")
-st.warning("Write your essay with title, introduction, body and conclusion like, title: your text and do same for introduction: body: and conclusion: \n For example \n title: This is title \n\n introduction: This \n is \n introduction \n\n body: this \n is\n body \n\n conclusion: this\n is\n conclusion")
+st.warning(f"This app finds, corrects word errors \n\n Write your essay with title, introduction, body and conclusion like, title: your text and do same for introduction: body: and conclusion: \n For example \n title: This is title \n\n introduction: This \n is \n introduction \n\n body: this \n is\n body \n\n conclusion: this\n is\n conclusion")
 
 # Input textarea for the user to enter their essay
 user_essay = st.text_area("Enter your essay here:", value='', height=400)
