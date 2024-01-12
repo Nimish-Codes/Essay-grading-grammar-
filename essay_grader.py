@@ -23,7 +23,7 @@ def initialize_bert_model():
         return None, None
 
 # Load spaCy model and add the 'sentencizer' component
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_lg")
 sentencizer = nlp.add_pipe('sentencizer')
 
 tool = initialize_language_tool()
