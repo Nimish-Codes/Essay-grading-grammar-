@@ -1,7 +1,4 @@
 streamlit
-sentence_transformers
+spacy
 language_tool_python
-requests
-streamlit_analytics
-nbconvert
-nbformat
+requests.exceptions
