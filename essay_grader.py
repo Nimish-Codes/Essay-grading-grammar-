@@ -1,9 +1,10 @@
 import streamlit as st
 import spacy
-import language_tool_python
+
 import requests.exceptions
 
 pip install language-tool-python
+import language_tool_python
 
 # Function to initialize LanguageTool
 def initialize_language_tool():
