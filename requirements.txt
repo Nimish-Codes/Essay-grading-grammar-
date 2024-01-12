@@ -1,4 +1,4 @@
 streamlit
-en_core_web_sm
+language_tool_python
 spacy
 requests
