@@ -1,9 +1,9 @@
 import streamlit as st
-import spacy
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import pipeline, BertTokenizer, BertForSequenceClassification
 import torch
 import requests.exceptions
 import language_tool_python
+from nltk.tokenize import sent_tokenize
 
 def initialize_language_tool():
     try:
@@ -22,17 +22,15 @@ def initialize_bert_model():
         print(f"Error initializing BERT model: {e}")
         return None, None
 
-# Load spaCy model and add the 'sentencizer' component
-nlp = spacy.load("en_core_web_lg")
-sentencizer = nlp.add_pipe('sentencizer')
-
 tool = initialize_language_tool()
 bert_tokenizer, bert_model = initialize_bert_model()
 
+def tokenize_text(text):
+    return sent_tokenize(text)
+
 def process_and_grade_essay(essay):
-    # ... (your existing code)
-    # Step 1: Process the essay using spaCy
-    doc = nlp(essay)
+    # Step 1: Tokenize the essay
+    sentences = tokenize_text(essay)
 
     # Step 2: Extract faults, grammar mistakes, and suggestions
     faults = []
@@ -85,10 +83,10 @@ def process_and_grade_essay(essay):
         result['bert_feedback'] = ["Error initializing BERT model. Please check your internet connection."]
 
     # Step 4: Provide overall feedback
-    has_title = any(sent.text.lower().startswith('title') for sent in doc.sents)
-    has_introduction = any(sent.text.lower().startswith('introduction') for sent in doc.sents)
-    has_body = any(sent.text.lower().startswith('body') for sent in doc.sents)
-    has_conclusion = any(sent.text.lower().startswith('conclusion') for sent in doc.sents)
+    has_title = any(sent.lower().startswith('title') for sent in sentences)
+    has_introduction = any(sent.lower().startswith('introduction') for sent in sentences)
+    has_body = any(sent.lower().startswith('body') for sent in sentences)
+    has_conclusion = any(sent.lower().startswith('conclusion') for sent in sentences)
 
     if not has_title:
         faults.append("The essay lacks a title.")
@@ -110,9 +108,6 @@ def process_and_grade_essay(essay):
 
     # Step 5: Return the result
     return result
-
-# Example usage:
-# user_essay = '''This is an essay.'''
 
 # Streamlit app
 def main():
