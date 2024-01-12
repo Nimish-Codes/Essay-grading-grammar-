@@ -1,8 +1,6 @@
 streamlit
 spacy
 transformers
-BertTokenizer
-BertForSequenceClassification
 torch
 requests
 language_tool_python
