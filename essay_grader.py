@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import pipeline, BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import requests.exceptions
 import language_tool_python
@@ -42,12 +42,7 @@ def process_and_grade_essay(essay):
         # Provide more detailed feedback for each grammar mistake
         detailed_feedback = []
         for match in grammar_mistakes:
-            if hasattr(match, 'fromx') and hasattr(match, 'tox'):
-                detailed_feedback.append(f"Error from character {match.fromx} to {match.tox}: {match.message}")
-            elif hasattr(match, 'fromy') and hasattr(match, 'toy'):
-                detailed_feedback.append(f"Error at line {match.fromy}, column {match.fromycol}: {match.message}")
-            else:
-                detailed_feedback.append(f"Error: {match.message}")
+            detailed_feedback.append(f"Error: {match.message}")
 
         # Include detailed feedback in the result
         result = {
