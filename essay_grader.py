@@ -1,24 +1,6 @@
 import streamlit as st
 import spacy
-
-import requests.exceptions
-
-pip install language-tool-python
-import language_tool_python
-
-# Function to initialize LanguageTool
-def initialize_language_tool():
-    try:
-        return language_tool_python.LanguageTool('en-US')
-    except requests.exceptions.RequestException as e:
-        print(f"Error initializing LanguageTool: {e}")
-        return None
-
-# Load spacy model and add the 'sentencizer' component
-nlp = spacy.load("en_core_web_sm")
-sentencizer = nlp.add_pipe('sentencizer')
-
-tool = initialize_language_tool()
+import requests
 
 # Function to process and grade essay
 def process_and_grade_essay(essay):
@@ -30,7 +12,11 @@ def process_and_grade_essay(essay):
     faults = []
 
     if tool:
-        grammar_mistakes = tool.check(essay)
+        # Use LanguageTool API for grammar checking
+        language_tool_url = "https://languagetool.org/api/v2/check"
+        data = {"text": essay}
+        response = requests.post(language_tool_url, data=data)
+        grammar_mistakes = response.json()
         corrected_essay = tool.correct(essay)
 
         # Provide more detailed feedback for each grammar mistake
