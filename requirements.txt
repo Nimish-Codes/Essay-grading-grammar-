@@ -1,6 +1,6 @@
 streamlit
-spacy
 transformers
 torch
 requests
 language_tool_python
+nltk
