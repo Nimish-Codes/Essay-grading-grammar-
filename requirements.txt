@@ -3,3 +3,5 @@ sentence_transformers
 language_tool_python
 requests
 streamlit_analytics
+nbconvert
+nbformat
