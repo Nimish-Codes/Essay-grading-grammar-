@@ -3,6 +3,8 @@ import spacy
 import language_tool_python
 import requests.exceptions
 
+pip install language-tool-python
+
 # Function to initialize LanguageTool
 def initialize_language_tool():
     try:
