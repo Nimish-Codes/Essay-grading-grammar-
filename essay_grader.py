@@ -1,33 +1,97 @@
 import streamlit as st
 import spacy
-import requests
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
+import requests.exceptions
 import language_tool_python
 
-# Download spaCy model if not already installed
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    st.info("Downloading spaCy model. This may take some time.")
-    from spacy.cli import download
-    download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
-
-# Function to initialize LanguageTool
 def initialize_language_tool():
     try:
-        return language_tool_python.LanguageTool('https://languagetool.org/api/v2')
-    except Exception as e:
+        return language_tool_python.LanguageTool('en-US')
+    except requests.exceptions.RequestException as e:
         print(f"Error initializing LanguageTool: {e}")
         return None
 
-# Function to process and grade essay
-def process_and_grade_essay(nlp, tool, essay):
-    # Check for the presence of introduction, body, and conclusion sections
-    has_introduction = any(sent.text.lower().startswith('introduction') for sent in nlp(essay).sents)
-    has_body = any(sent.text.lower().startswith('body') for sent in nlp(essay).sents)
-    has_conclusion = any(sent.text.lower().startswith('conclusion') for sent in nlp(essay).sents)
+def initialize_bert_model():
+    try:
+        model_name = "bert-base-uncased"
+        tokenizer = BertTokenizer.from_pretrained(model_name)
+        model = BertForSequenceClassification.from_pretrained(model_name)
+        return tokenizer, model
+    except requests.exceptions.RequestException as e:
+        print(f"Error initializing BERT model: {e}")
+        return None, None
 
+# Load spaCy model and add the 'sentencizer' component
+nlp = spacy.load("en_core_web_sm")
+sentencizer = nlp.add_pipe('sentencizer')
+
+tool = initialize_language_tool()
+bert_tokenizer, bert_model = initialize_bert_model()
+
+def process_and_grade_essay(essay):
+    # ... (your existing code)
+    # Step 1: Process the essay using spaCy
+    doc = nlp(essay)
+
+    # Step 2: Extract faults, grammar mistakes, and suggestions
     faults = []
+
+    if tool:
+        grammar_mistakes = tool.check(essay)
+        corrected_essay = tool.correct(essay)
+
+        # Provide more detailed feedback for each grammar mistake
+        detailed_feedback = []
+        for match in grammar_mistakes:
+            if hasattr(match, 'fromx') and hasattr(match, 'tox'):
+                detailed_feedback.append(f"Error from character {match.fromx} to {match.tox}: {match.message}")
+            elif hasattr(match, 'fromy') and hasattr(match, 'toy'):
+                detailed_feedback.append(f"Error at line {match.fromy}, column {match.fromycol}: {match.message}")
+            else:
+                detailed_feedback.append(f"Error: {match.message}")
+
+        # Include detailed feedback in the result
+        result = {
+            'grammar_mistakes': grammar_mistakes,
+            'detailed_feedback': detailed_feedback,
+            'corrected_essay': corrected_essay
+        }
+    else:
+        result = {
+            'grammar_mistakes': [],
+            'detailed_feedback': ["Error initializing LanguageTool. Please check your internet connection."],
+            'corrected_essay': essay
+        }
+
+    # Step 3: Use BERT model for essay grading
+    if bert_tokenizer and bert_model:
+        # Tokenize and encode the essay for BERT
+        inputs = bert_tokenizer(essay, return_tensors="pt", truncation=True)
+        # Perform classification using the BERT model
+        outputs = bert_model(**inputs)
+        # Get the predicted class (binary classification)
+        predicted_class = torch.argmax(outputs.logits, dim=1).item()
+
+        # Provide feedback based on predicted class
+        if predicted_class == 0:
+            faults.append("The essay is classified as negative.")
+        else:
+            faults.append("The essay is classified as positive.")
+
+        # Include BERT feedback in the result
+        result['bert_feedback'] = faults
+    else:
+        result['bert_feedback'] = ["Error initializing BERT model. Please check your internet connection."]
+
+    # Step 4: Provide overall feedback
+    has_title = any(sent.text.lower().startswith('title') for sent in doc.sents)
+    has_introduction = any(sent.text.lower().startswith('introduction') for sent in doc.sents)
+    has_body = any(sent.text.lower().startswith('body') for sent in doc.sents)
+    has_conclusion = any(sent.text.lower().startswith('conclusion') for sent in doc.sents)
+
+    if not has_title:
+        faults.append("The essay lacks a title.")
 
     if not has_introduction:
         faults.append("The essay lacks an introduction.")
@@ -38,30 +102,45 @@ def process_and_grade_essay(nlp, tool, essay):
     if not has_conclusion:
         faults.append("The essay lacks a conclusion.")
 
-    # Use LanguageTool API for grammar checking
-    language_tool_url = "https://languagetool.org/api/v2/check"
-    data = {"text": essay}
-    response = requests.post(language_tool_url, data=data)
-    grammar_mistakes = response.json()
+    feedback = "Overall, your essay could benefit from the following improvements:\n"
+    feedback += "\n".join(faults)
 
-    # Display results
-    st.subheader("Grammar Mistakes:")
-    st.write(grammar_mistakes)
+    # Include overall feedback in the result
+    result['feedback'] = feedback
 
-    st.subheader("Structure and Content Feedback:")
-    st.write(faults)
+    # Step 5: Return the result
+    return result
+
+# Example usage:
+# user_essay = '''This is an essay.'''
 
 # Streamlit app
-st.title("Essay Grader")
+def main():
+    st.title("Essay Grading App")
 
-# User input for the essay
-user_essay = st.text_area("Enter your essay here:")
+    # User input for the essay
+    user_essay = st.text_area("Enter your essay:")
 
-# Process and grade the essay when a button is clicked
-if st.button("Grade Essay"):
-    tool = initialize_language_tool()
+    # Process and grade the essay when the user clicks a button
+    if st.button("Process and Grade"):
+        result = process_and_grade_essay(user_essay)
 
-    if tool:
-        process_and_grade_essay(nlp, tool, user_essay)
-    else:
-        st.warning("Error initializing LanguageTool. Please check your internet connection.")
+        # Display results in the app
+        st.subheader("Grammar Mistakes:")
+        st.write(result['grammar_mistakes'])
+
+        st.subheader("Detailed Feedback:")
+        st.write(result['detailed_feedback'])
+
+        st.subheader("Feedback:")
+        st.write(result['feedback'])
+
+        st.subheader("Corrected Essay:")
+        st.write(result['corrected_essay'])
+
+        st.subheader("BERT Feedback:")
+        st.write(result['bert_feedback'])
+
+# Run the Streamlit app
+if __name__ == "__main__":
+    main()
