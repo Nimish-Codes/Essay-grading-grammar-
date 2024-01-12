@@ -1,4 +1,8 @@
 streamlit
-language_tool_python
 spacy
+transformers
+BertTokenizer
+BertForSequenceClassification
+torch
 requests
+language_tool_python
