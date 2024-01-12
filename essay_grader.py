@@ -3,10 +3,19 @@ import spacy
 import requests
 import language_tool_python
 
+# Download spaCy model if not already installed
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    st.info("Downloading spaCy model. This may take some time.")
+    from spacy.cli import download
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
+
 # Function to initialize LanguageTool
 def initialize_language_tool():
     try:
-        return language_tool_python.LanguageTool('http://localhost:8081')
+        return language_tool_python.LanguageTool('https://languagetool.org/api/v2')
     except Exception as e:
         print(f"Error initializing LanguageTool: {e}")
         return None
@@ -50,9 +59,8 @@ user_essay = st.text_area("Enter your essay here:")
 
 # Process and grade the essay when a button is clicked
 if st.button("Grade Essay"):
-    nlp = spacy.load("en_core_web_sm")
     tool = initialize_language_tool()
-    
+
     if tool:
         process_and_grade_essay(nlp, tool, user_essay)
     else:
