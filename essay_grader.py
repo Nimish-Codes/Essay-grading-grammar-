@@ -1,20 +1,19 @@
 import streamlit as st
-from streamlit_analytics import with_databricks
+from nbconvert import PythonExporter
+import nbformat
 
-# Create a Streamlit app
-app = st.empty()
+# Define a function to run and display a Jupyter Notebook
+def run_and_display_notebook(notebook_path):
+    with open(notebook_path, 'r', encoding='utf-8') as notebook_file:
+        notebook_content = notebook_file.read()
 
-# Define a function to run the notebook
-@st.cache(allow_output_mutation=True)
-def run_notebook(path):
-    with open(path, 'r') as notebook:
-        code = notebook.read()
-    return with_databricks(code)
+    notebook = nbformat.reads(notebook_content, as_version=4)
+    exporter = PythonExporter()
+    python_code, _ = exporter.from_notebook_node(notebook)
 
-# Run the notebook
-path = 'essay grader.ipynb'
-result = run_notebook(path)
+    # Run the notebook code
+    exec(python_code)
 
-# Display the result in the Streamlit app
-app.pydeck_chart(result)
-
+# Run and display the Jupyter Notebook
+notebook_path = 'essay grader.ipynb'
+run_and_display_notebook(notebook_path)
